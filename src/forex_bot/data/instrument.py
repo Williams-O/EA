@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import math
 from dataclasses import dataclass
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
 _REQUIRED = ("symbol", "digits", "point", "contract_size", "volume_min", "volume_step", "volume_max")
@@ -34,22 +35,26 @@ class SymbolSpec:
             raise ValueError("digits must be a non-negative integer.")
         for name in ("point", "contract_size", "volume_min", "volume_step", "volume_max"):
             value = getattr(self, name)
-            if not math.isfinite(value) or value <= 0:
+            if isinstance(value, bool) or not math.isfinite(value) or value <= 0:
                 raise ValueError(f"{name} must be a finite positive number.")
         if self.volume_min > self.volume_max:
             raise ValueError("volume_min must not exceed volume_max.")
         for name in ("min_price", "max_price"):
             value = getattr(self, name)
-            if value is not None and (not math.isfinite(value) or value <= 0):
+            if value is not None and (isinstance(value, bool) or not math.isfinite(value) or value <= 0):
                 raise ValueError(f"{name} must be finite and positive when provided.")
         if self.min_price is not None and self.max_price is not None:
             if self.min_price >= self.max_price:
                 raise ValueError("min_price must be below max_price.")
 
     def round_price(self, price: float) -> float:
-        if not math.isfinite(price):
-            raise ValueError("price must be finite.")
-        return round(price, self.digits)
+        """Round to the broker's point increment, then return a float."""
+        if not math.isfinite(price) or price <= 0:
+            raise ValueError("price must be finite and positive.")
+        tick = Decimal(str(self.point))
+        price_decimal = Decimal(str(price))
+        ticks = (price_decimal / tick).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+        return float(ticks * tick)
 
     def points_to_price(self, points: float) -> float:
         """Convert broker points (such as MT5 spread) to quote-price units."""
