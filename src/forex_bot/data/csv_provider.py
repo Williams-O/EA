@@ -114,6 +114,13 @@ class CsvCandleProvider:
             if col not in raw.columns:
                 raw[col] = float("nan") if col == "spread" else 0.0
         df = raw[COLUMNS].apply(pd.to_numeric, errors="coerce")
+        if "spread" in raw.columns:
+            spread_input = raw["spread"]
+            invalid_spread_text = spread_input.notna() & pd.to_numeric(spread_input, errors="coerce").isna()
+            if invalid_spread_text.any():
+                raise ValueError(
+                    f"{int(invalid_spread_text.sum())} non-numeric spread values in {path.name}."
+                )
         if self.spread_in_points:
             df["spread"] = df["spread"] * self.spec.point
 
