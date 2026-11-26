@@ -66,6 +66,8 @@ def test_spec_normalizes_and_converts():
     assert spec.symbol == "XAUUSD"
     assert spec.points_to_price(25) == pytest.approx(0.25)
     assert spec.round_price(2650.12345) == 2650.12
+    nonstandard_tick = SymbolSpec(**{**GOLD, "point": 0.05})
+    assert nonstandard_tick.round_price(2650.03) == 2650.05
 
 
 def test_spec_rejects_bad_values():
@@ -228,13 +230,22 @@ def test_mt5_prefers_tick_volume_and_missing_spread_stays_unknown(tmp_path):
     assert pd.isna(df["spread"].iloc[0])
 
 
+def test_csv_rejects_non_numeric_spread(tmp_path):
+    (tmp_path / "XAUUSD_M15.csv").write_text(
+        "time,open,high,low,close,spread\n"
+        "2024-01-02 00:00,2650,2651,2649,2650.5,unknown\n"
+    )
+    with pytest.raises(ValueError, match="non-numeric spread"):
+        CsvCandleProvider(tmp_path).get_candles("XAUUSD", Timeframe.M15)
+
+
 def test_points_spread_requires_spec(tmp_path):
     with pytest.raises(ValueError, match="SymbolSpec"):
         CsvCandleProvider(tmp_path, spread_in_points=True)
 
 
-def test_symbol_mismatch_with_spec(tmp_path):
-    provider = CsvCandleProvider(tmp_path, spec=SymbolSpec(**GOLD))
+def test_symbol_mismatch_with_spec():
+    provider = CsvCandleProvider("unused", spec=SymbolSpec(**GOLD))
     with pytest.raises(ValueError, match="Spec is for"):
         provider.get_candles("EURUSD", Timeframe.M15)
 
