@@ -1,7 +1,7 @@
 # Forex Bot Development Roadmap
 
 ## Goal
-Develop a modular, testable forex trading system in Python. The first release is demo-only; live trading is out of scope until strategy validation, safety controls, and broker integration are reviewed.
+Develop a modular, testable trading system in Python focused on XAUUSD (Gold). The first release is demo-only; live trading is out of scope until strategy validation, safety controls, and broker integration are reviewed.
 
 ## Principles
 - Risk controls override strategy signals.
@@ -16,7 +16,7 @@ Develop a modular, testable forex trading system in Python. The first release is
 - [x] Environment-based config with safe defaults
 - [x] Logging and basic tests
 - [ ] Choose broker/platform and data source (MT5, broker API, etc.)
-- [ ] Confirm instruments, timezone, and sessions
+- [x] Set the research instrument to XAUUSD (Gold) and provisional timeframe to M15 in configuration\n- [ ] Confirm broker-specific symbol, timezone, sessions, and instrument specifications
 
 Exit: install/test succeeds, app starts in safe mode, no secrets in repo.
 
@@ -92,5 +92,5 @@ Exit: sustained demo operation with reconciled orders and no safety failures.
 - Demo risk cap: 0.5% per trade; daily loss cap: 2%
 - Local development; demo account only
 
-## v1 definition of done
+Gold-specific validation requirements: use broker-verified contract size, tick size/value, volume step/min/max, margin rules, spread and session hours. Gold's volatility and price scale differ from major FX pairs; do not reuse FX pip assumptions or position-sizing calculations without verification. Broker symbol may have a suffix (for example, XAUUSDm); configure the exact broker symbol.\n\n## v1 definition of done
 Demo-only bot retrieves validated market data, generates reproducible signals, backtests with costs, sizes positions safely, executes and reconciles demo orders, halts on risk/data/connectivity faults, and produces auditable reports.
