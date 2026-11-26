@@ -26,14 +26,21 @@ python -m forex_bot
 pytest
 ```
 
-## Configuration
-Copy `.env.example` to `.env` and edit local settings if needed. Defaults are XAUUSD and M15.
+## Phase 1 market-data utilities
+- `CsvCandleProvider` loads CSV or MetaTrader 5 exports from `data/<SYMBOL>_<TIMEFRAME>.csv`.
+- Source timestamps are converted to UTC. Naive timestamps use the configured broker server timezone.
+- MT5 tick-volume is preferred if exported; spread is in quote-price units, or converted from broker points when configured with a `SymbolSpec`.
+- Missing spread remains unknown (`NaN`); do not interpret it as zero transaction cost in backtests.
+- `SymbolSpec` must contain broker-verified values. `examples/XAUUSD_spec.example.json` is a sample structure only, not a real broker specification.
+- Validation sorts rows, removes duplicates and invalid candles, flags conflicting duplicate timestamps, reports missing-bar gaps and suspicious ranges.
+
+Weekend-gap detection is only a heuristic; broker session schedules, DST and holidays are not fully modeled. The live/demo data feed is not implemented yet.
 
 ## Safety
 - Trading disabled by default.
 - Never put broker credentials in source or commit them.
 - Research/demo only. Live mode is unsupported by this scaffold.
-- Gold-specific contract size, tick value/size, volume limits, margin, trading sessions, and spread must be verified for the selected broker before any strategy/backtest or demo execution relies on them.
+- Gold contract size, tick value/size, volume limits, margin, trading sessions, and spread must be verified with the chosen broker before strategy, backtest, sizing or execution work relies on them.
 
 ## Structure
 - `src/forex_bot/`: application package
